@@ -1,0 +1,113 @@
+def visualizar_clientes():
+    try:
+        conexao = conectar_banco()
+        cursor = conexao.cursor()
+
+        cursor.execute("""
+            SELECT id, nome, email, telefone
+            FROM clientes
+            ORDER BY nome
+        """)
+
+        clientes = cursor.fetchall()
+        conexao.close()
+
+        # Nova janela
+        janela_clientes = tk.Toplevel(janela)
+        janela_clientes.title("Clientes Cadastrados")
+        janela_clientes.geometry("650x350")
+        janela_clientes.resizable(False, False)
+
+        tk.Label(
+            janela_clientes,
+            text="Clientes Cadastrados",
+            font=("Arial", 16, "bold")
+        ).pack(pady=15)
+
+        # Área para exibir os clientes
+        frame_lista = tk.Frame(janela_clientes)
+        frame_lista.pack(fill="both", expand=True, padx=15, pady=10)
+
+        if not clientes:
+            tk.Label(
+                frame_lista,
+                text="Nenhum cliente cadastrado.",
+                font=("Arial", 11)
+            ).pack(pady=20)
+            return
+
+        # Cabeçalho
+        tk.Label(
+            frame_lista,
+            text="ID",
+            font=("Arial", 10, "bold"),
+            width=5
+        ).grid(row=0, column=0, padx=5, pady=5)
+
+        tk.Label(
+            frame_lista,
+            text="Nome",
+            font=("Arial", 10, "bold"),
+            width=20
+        ).grid(row=0, column=1, padx=5, pady=5)
+
+        tk.Label(
+            frame_lista,
+            text="E-mail",
+            font=("Arial", 10, "bold"),
+            width=25
+        ).grid(row=0, column=2, padx=5, pady=5)
+
+        tk.Label(
+            frame_lista,
+            text="Telefone",
+            font=("Arial", 10, "bold"),
+            width=15
+        ).grid(row=0, column=3, padx=5, pady=5)
+
+        # Dados dos clientes
+        for linha, cliente in enumerate(clientes, start=1):
+            id_cliente, nome, email, telefone = cliente
+
+            tk.Label(
+                frame_lista,
+                text=id_cliente,
+                width=5
+            ).grid(row=linha, column=0, padx=5, pady=3)
+
+            tk.Label(
+                frame_lista,
+                text=nome,
+                width=20,
+                anchor="w"
+            ).grid(row=linha, column=1, padx=5, pady=3)
+
+            tk.Label(
+                frame_lista,
+                text=email,
+                width=25,
+                anchor="w"
+            ).grid(row=linha, column=2, padx=5, pady=3)
+
+            tk.Label(
+                frame_lista,
+                text=telefone,
+                width=15,
+                anchor="w"
+            ).grid(row=linha, column=3, padx=5, pady=3)
+
+    except sqlite3.Error as erro:
+        messagebox.showerror(
+            "Erro",
+            f"Não foi possível carregar os clientes.\n\nErro: {erro}"
+        )
+botao_visualizar = tk.Button(
+    frame_botoes,
+    text="Visualizar Clientes",
+    width=18,
+    command=visualizar_clientes,
+    bg="#2196F3",
+    fg="white"
+)
+
+botao_visualizar.grid(row=1, column=0, columnspan=2, pady=10)
