@@ -1,0 +1,375 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Clientes - JSON</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f2f5;
+            margin: 0;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 650px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px #ccc;
+        }
+
+        h1 {
+            text-align: center;
+            color: #234;
+        }
+
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 10px 15px;
+            margin: 12px 5px 5px 0;
+            border: none;
+            border-radius: 5px;
+            background: #1769aa;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #104b7c;
+        }
+
+        .cliente {
+            background: #eef4fa;
+            padding: 12px;
+            margin-top: 8px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .cliente:hover {
+            background: #d6e8fa;
+        }
+
+        #mensagem {
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        pre {
+            background: #222;
+            color: #8ef58e;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Cadastro de Clientes</h1>
+
+    <label for="id">Código do Cliente (ID):</label>
+    <input type="text" id="id" placeholder="Gerado automaticamente" readonly>
+
+    <label for="nome">Nome:</label>
+    <input type="text" id="nome" placeholder="Digite o nome">
+
+    <label for="email">E-mail:</label>
+    <input type="email" id="email" placeholder="Digite o e-mail">
+
+    <button onclick="incluir_cliente()">Incluir Cliente</button>
+    <button onclick="cadastrar_clientes()">Cadastrar Vários</button>
+    <button onclick="listar_clientes()">Listar Clientes</button>
+    <button onclick="salvar_cliente()">Baixar clientes.json</button>
+    <button onclick="limpar_formulario()">Limpar</button>
+
+    <hr>
+
+    <h3>Buscar Cliente</h3>
+
+    <input
+        type="text"
+        id="busca"
+        placeholder="Digite o nome ou ID do cliente"
+        oninput="buscar_cliente()"
+    >
+
+    <h3>Lista de Clientes</h3>
+    <div id="lista"></div>
+
+    <h3>Dados em formato JSON</h3>
+    <pre id="resultado">[]</pre>
+
+    <p id="mensagem"></p>
+
+</div>
+
+<script>
+
+// Array que armazena os clientes
+let clientes = [];
+
+// Classe Cliente
+class Cliente {
+
+    constructor(id, nome, email) {
+        this.id = id;
+        this.nome = nome;
+        this.email = email;
+    }
+
+    // Converte os dados do cliente para JSON
+    toJSON() {
+        return {
+            id: this.id,
+            nome: this.nome,
+            email: this.email
+        };
+    }
+}
+
+// Gera automaticamente o próximo ID
+function gerar_id() {
+    if (clientes.length === 0) {
+        return 1;
+    }
+
+    return Math.max(...clientes.map(c => c.id)) + 1;
+}
+
+// Inclui um novo cliente
+function incluir_cliente() {
+
+    const nome = document.getElementById("nome").value.trim();
+    const email = document.getElementById("email").value.trim();
+
+    if (nome === "" || email === "") {
+        alert("Preencha o nome e o e-mail!");
+        return;
+    }
+
+    const novo_cliente = new Cliente(
+        gerar_id(),
+        nome,
+        email
+    );
+
+    clientes.push(novo_cliente);
+
+    atualizar_tela();
+
+    document.getElementById("mensagem").textContent =
+        "Cliente cadastrado com sucesso!";
+
+    limpar_formulario();
+}
+
+// Cadastra múltiplos clientes usando caixas de diálogo
+function cadastrar_clientes() {
+
+    let continuar = true;
+
+    while (continuar) {
+
+        const nome = prompt("Digite o nome do cliente:");
+
+        if (nome === null || nome.trim() === "") {
+            break;
+        }
+
+        const email = prompt("Digite o e-mail do cliente:");
+
+        if (email === null || email.trim() === "") {
+            break;
+        }
+
+        clientes.push(
+            new Cliente(gerar_id(), nome.trim(), email.trim())
+        );
+
+        continuar = confirm("Deseja cadastrar outro cliente?");
+    }
+
+    atualizar_tela();
+
+    alert("Cadastro finalizado!");
+}
+
+// Lista todos os clientes
+function listar_clientes() {
+
+    const lista = document.getElementById("lista");
+
+    lista.innerHTML = "";
+
+    if (clientes.length === 0) {
+        lista.innerHTML = "<p>Nenhum cliente cadastrado.</p>";
+        return;
+    }
+
+    clientes.forEach(cliente => {
+
+        const item = document.createElement("div");
+
+        item.className = "cliente";
+
+        item.textContent =
+            "ID: " + cliente.id +
+            " | Nome: " + cliente.nome +
+            " | E-mail: " + cliente.email;
+
+        // Ao clicar, preenche automaticamente o formulário
+        item.onclick = function() {
+            selecionar_cliente(cliente.id);
+        };
+
+        lista.appendChild(item);
+    });
+}
+
+// Busca cliente pelo nome ou ID
+function buscar_cliente() {
+
+    const termo = document.getElementById("busca")
+        .value.toLowerCase().trim();
+
+    const encontrados = clientes.filter(cliente =>
+        cliente.nome.toLowerCase().includes(termo) ||
+        String(cliente.id).includes(termo)
+    );
+
+    const lista = document.getElementById("lista");
+
+    lista.innerHTML = "";
+
+    encontrados.forEach(cliente => {
+
+        const item = document.createElement("div");
+
+        item.className = "cliente";
+
+        item.textContent =
+            "ID: " + cliente.id +
+            " | Nome: " + cliente.nome +
+            " | E-mail: " + cliente.email;
+
+        item.onclick = function() {
+            selecionar_cliente(cliente.id);
+        };
+
+        lista.appendChild(item);
+    });
+
+    if (encontrados.length === 0) {
+        lista.innerHTML = "<p>Cliente não encontrado.</p>";
+    }
+}
+
+// Seleciona cliente e preenche o formulário
+function selecionar_cliente(id) {
+
+    const cliente = clientes.find(c => c.id === id);
+
+    if (cliente) {
+
+        document.getElementById("id").value = cliente.id;
+        document.getElementById("nome").value = cliente.nome;
+        document.getElementById("email").value = cliente.email;
+
+        document.getElementById("mensagem").textContent =
+            "Cliente selecionado!";
+    }
+}
+
+// Salva e baixa os dados em arquivo JSON
+function salvar_cliente() {
+
+    const dados = JSON.stringify(
+        clientes.map(c => c.toJSON()),
+        null,
+        4
+    );
+
+    const arquivo = new Blob(
+        [dados],
+        { type: "application/json" }
+    );
+
+    const link = document.createElement("a");
+
+    link.href = URL.createObjectURL(arquivo);
+    link.download = "clientes.json";
+
+    link.click();
+
+    URL.revokeObjectURL(link.href);
+
+    document.getElementById("resultado").textContent = dados;
+
+    document.getElementById("mensagem").textContent =
+        "Arquivo clientes.json gerado com sucesso!";
+}
+
+// Atualiza a lista e o resultado JSON
+function atualizar_tela() {
+
+    listar_clientes();
+
+    document.getElementById("resultado").textContent =
+        JSON.stringify(
+            clientes.map(c => c.toJSON()),
+            null,
+            4
+        );
+}
+
+// Limpa os campos do formulário
+function limpar_formulario() {
+
+    document.getElementById("id").value = "";
+    document.getElementById("nome").value = "";
+    document.getElementById("email").value = "";
+}
+
+// Limpa os dados no início do programa
+function limpar_arquivo() {
+
+    clientes = [];
+
+    atualizar_tela();
+
+}
+
+// Inicialização do programa
+window.onload = function() {
+
+    limpar_arquivo();
+
+};
+
+</script>
+
+</body>
+</html>
