@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestão de Clientes</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: #f0f2f5;
+      padding: 20px;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+    }
+
+    .form-container {
+      background-color: #ffffff;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 550px;
+    }
+
+    h2, h3 {
+      color: #333;
+      text-align: center;
+      margin-top: 0;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      transition: background-color 0.2s;
+    }
+
+    #btnPrincipal {
+      width: 100%;
+      background-color: #28a745;
+      color: white;
+      display: block;
+    }
+
+    #btnPrincipal:hover {
+      background-color: #218838;
+    }
+
+    #btnLimpar {
+      width: 100%;
+      background-color: #6c757d;
+      color: white;
+      display: block;
+      margin-top: 10px;
+    }
+
+    #btnLimpar:hover {
+      background-color: #5a6268;
+    }
+
+    .controles-lista {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+
+    .controles-lista input {
+      margin-bottom: 0;
+      flex: 1;
+    }
+
+    .btn-ordenar {
+      background-color: #007bff;
+      color: white;
+      white-space: nowrap;
+    }
+
+    .btn-ordenar:hover {
+      background-color: #0069d9;
+    }
+
+    .contador {
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+
+    #mensagemFeedback {
+      display: none;
+      padding: 10px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    li {
+      background-color: #f8f9fa;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .info-cliente {
+      flex: 1;
+      font-size: 14px;
+      color: #333;
+      word-break: break-word;
+    }
+
+    .acoes-item {
+      display: flex;
+      gap: 6px;
+    }
+
+    .acoes-item button:nth-child(1) {
+      background-color: #ffc107;
+      color: #212529;
+      padding: 6px 10px;
+    }
+
+    .acoes-item button:nth-child(2) {
+      background-color: #dc3545;
+      color: white;
+      padding: 6px 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="form-container">
+    <h2>Cadastro de Clientes</h2>
+
+    <div id="mensagemFeedback"></div>
+
+    <input id="nome" placeholder="Nome" />
+    <input id="endereco" placeholder="Endereço" />
+    <input id="telefone" placeholder="Telefone" />
+
+    <button id="btnPrincipal" onclick="salvarCliente()">Adicionar</button>
+    <button id="btnLimpar" onclick="limparCampos()">Limpar</button>
+
+    <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+
+    <h3>Lista de Clientes</h3>
+
+    <div class="controles-lista">
+      <input id="busca" placeholder="Buscar cliente por nome..." oninput="carregarClientes()" />
+      <button class="btn-ordenar" onclick="ordenarClientes()">Ordenar (A-Z)</button>
+    </div>
+
+    <div class="contador" id="contadorClientes">Total de clientes: 0</div>
+
+    <ul id="listaClientes"></ul>
+  </div>
+
+  <script>
+    let indiceEdicao = null;
+
+    function mostrarFeedback(texto) {
+      const msg = document.getElementById('mensagemFeedback');
+      msg.textContent = texto;
+      msg.style.display = 'block';
+      setTimeout(() => {
+        msg.style.display = 'none';
+      }, 3000);
+    }
+
+    function limparCampos() {
+      document.getElementById('nome').value = '';
+      document.getElementById('endereco').value = '';
+      document.getElementById('telefone').value = '';
+      indiceEdicao = null;
+      const btn = document.getElementById('btnPrincipal');
+      btn.textContent = 'Adicionar';
+      btn.style.backgroundColor = '#28a745';
+    }
+
+    function carregarClientes() {
+      const clientes = JSON.parse(localStorage.getItem('clientes')) || [];
+      const termoBusca = document.getElementById('busca').value.toLowerCase();
+      const lista = document.getElementById('listaClientes');
+      const contador = document.getElementById('contadorClientes');
+
+      lista.innerHTML = '';
+      contador.textContent = `Total de clientes: ${clientes.length}`;
+
+      clientes.forEach((cliente, index) => {
+        if (cliente.nome.toLowerCase().includes(termoBusca)) {
+          const item = document.createElement('li');
+          item.innerHTML = `
+            <span class="info-cliente">${cliente.nome} - ${cliente.endereco} - ${cliente.telefone}</span>
+            <div class="acoes-item">
+              <button onclick="editarCliente(${index})">Editar</button>
+              <button onclick="excluirCliente(${index})">Excluir</button>
+            </div>
+          `;
+          lista.appendChild(item);
+        }
+      });
+    }
+
+    function salvarCliente() {
+      const nome = document.getElementById('nome').value.trim();
+      const endereco = document.getElementById('endereco').value.trim();
+      const telefone = document.getElementById('telefone').value.trim();
+
+      if (!nome || !endereco || !telefone) {
+        return alert("Preencha todos os campos!");
+      }
+
+      const clientes = JSON.parse(localStorage.getItem('clientes')) || [];
+
+      if (indiceEdicao !== null) {
+        clientes[indiceEdicao] = { nome, endereco, telefone };
+        localStorage.setItem('clientes', JSON.stringify(clientes));
+        mostrarFeedback("Cliente atualizado com sucesso!");
+      } else {
+        clientes.push({ nome, endereco, telefone });
+        localStorage.setItem('clientes', JSON.stringify(clientes));
+        mostrarFeedback("Cliente adicionado com sucesso!");
+      }
+
+      limparCampos();
+      carregarClientes();
+    }
+
+    function editarCliente(index) {
+      const clientes = JSON.parse(localStorage.getItem('clientes')) || [];
+      const cliente = clientes[index];
+
+      document.getElementById('nome').value = cliente.nome;
+      document.getElementById('endereco').value = cliente.endereco;
+      document.getElementById('telefone').value = cliente.telefone;
+
+      indiceEdicao = index;
+      const btn = document.getElementById('btnPrincipal');
+      btn.textContent = 'Salvar';
+      btn.style.backgroundColor = '#007bff';
+    }
+
+    function excluirCliente(index) {
+      if (confirm("Tem certeza que deseja excluir este cliente?")) {
+        const clientes = JSON.parse(localStorage.getItem('clientes')) || [];
+        clientes.splice(index, 1);
+        localStorage.setItem('clientes', JSON.stringify(clientes));
+
+        if (indiceEdicao === index) {
+          limparCampos();
+        }
+
+        mostrarFeedback("Cliente excluído com sucesso!");
+        carregarClientes();
+      }
+    }
+
+    function ordenarClientes() {
+      const clientes = JSON.parse(localStorage.getItem('clientes')) || [];
+      clientes.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
+      localStorage.setItem('clientes', JSON.stringify(clientes));
+      carregarClientes();
+      mostrarFeedback("Lista ordenada de A a Z!");
+    }
+
+    carregarClientes();
+  </script>
+</body>
+</html>
